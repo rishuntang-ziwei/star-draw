@@ -13,44 +13,35 @@
     <link rel="stylesheet" href="css/styles.css" />
   </head>
   <body>
-    <div class="app">
-      <header>
-        <h1>全知之眼</h1>
-        <p>先知斗數神牌 · 主星自選 · 輔星抽牌 · 四化收尾 · 依序翻開</p>
+    <div class="scene">
+      <header class="topbar">
+        <button type="button" class="pill-btn icon-btn" id="infoBtn" title="抽牌說明">i</button>
+        <div class="topbar-spacer"></div>
       </header>
 
-      <section id="welcome" class="stage">
-        <div class="stage-head">
-          <h2>抽牌流程</h2>
-          <p>
-            第一輪：14 張主星自選 2 張<br />
-            第二輪：14 張乙級輔星抽 2 張<br />
-            第三輪：12 張丙級輔星抽 2 張<br />
-            第四輪：四化 + 空牌抽 1 張<br />
-            最後依序翻開全部 7 張牌
-          </p>
-        </div>
-        <div class="actions">
-          <button type="button" class="btn btn-primary" id="startBtn">開始抽牌</button>
-        </div>
-      </section>
+      <main class="viewport">
+        <h1 class="brand" id="brand">全知之眼</h1>
 
-      <div id="game" class="hidden">
-        <nav class="progress" id="progress" aria-label="抽牌進度"></nav>
+        <p class="hint" id="hint">點擊卡牌開始</p>
 
-        <section class="stage">
-          <div class="stage-head">
-            <h2 id="stageTitle"></h2>
-            <p id="stageSubtitle"></p>
-          </div>
-          <p class="pick-counter" id="pickCounter"></p>
+        <div class="table" id="table"></div>
 
-          <div class="card-grid" id="cardGrid"></div>
-          <div class="draw-deck hidden" id="drawArea"></div>
+        <div class="picked-row" id="pickedRow"></div>
 
-          <div class="actions" id="actions"></div>
-        </section>
-      </div>
+        <div class="controls" id="controls"></div>
+      </main>
+
+      <dialog class="info-dialog" id="infoDialog">
+        <h2>抽牌流程</h2>
+        <ol>
+          <li>第一輪：14 張主星自行挑選 2 張</li>
+          <li>第二輪：14 張乙級輔星抽 2 張</li>
+          <li>第三輪：12 張丙級輔星抽 2 張</li>
+          <li>第四輪：四化 + 空牌抽 1 張</li>
+          <li>最後依序翻開全部 7 張牌</li>
+        </ol>
+        <button type="button" class="pill-btn" id="closeInfoBtn">知道了</button>
+      </dialog>
     </div>
 
     <script type="module" src="js/app.js"></script>
