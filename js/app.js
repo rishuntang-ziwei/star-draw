@@ -1,14 +1,16 @@
 import { DECK, ROUND_ORDER, TIERS, CARD_BACK } from './cards.js';
 
 const $ = (sel) => document.querySelector(sel);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const state = {
-  phase: 'idle', // idle | round | reveal | done
+  phase: 'idle',
   roundIndex: 0,
   roundPicks: [],
   deckRemaining: [],
   results: [],
   revealIndex: 0,
+  busy: false,
 };
 
 function shuffle(arr) {
@@ -36,7 +38,7 @@ function cardFaceHtml(card) {
   if (card.image) {
     return `<img src="${card.image}" alt="${card.name}" loading="lazy">`;
   }
-  return `<div style="display:grid;place-items:center;height:100%;font-weight:700">${card.name}</div>`;
+  return `<div class="card-text-fallback">${card.name}</div>`;
 }
 
 function makeCardEl(card, opts = {}) {
@@ -45,6 +47,7 @@ function makeCardEl(card, opts = {}) {
   btn.className = 'card';
   if (opts.hero) btn.classList.add('hero');
   if (opts.inRow) btn.classList.add('in-row');
+  if (opts.inFan) btn.classList.add('in-fan');
   if (opts.flipped) btn.classList.add('flipped', 'revealed');
   if (opts.waiting) btn.classList.add('waiting');
   if (opts.activeFlip) btn.classList.add('active-flip');
@@ -67,59 +70,105 @@ function fanAngles(count) {
   return Array.from({ length: count }, (_, i) => start + step * i);
 }
 
-function layoutFan(container, entries) {
+function fanTransform(angle) {
+  const lift = Math.abs(angle) * 0.42;
+  return { angle, lift, css: `rotate(${angle}deg) translateY(-${lift}px)` };
+}
+
+function layoutFan(container, entries, { dealIn = false } = {}) {
   container.innerHTML = '';
+  container.classList.toggle('is-dealing', dealIn);
   const angles = fanAngles(entries.length);
 
   entries.forEach((entry, index) => {
-    const { card, onClick, picked } = entry;
-    const el = makeCardEl(card);
-    if (picked) {
-      el.disabled = true;
-      el.classList.add('picked');
-    }
+    const { card, onClick } = entry;
+    const el = makeCardEl(card, { inFan: true });
+    const { angle, lift, css } = fanTransform(angles[index]);
 
-    const angle = angles[index];
-    const lift = Math.abs(angle) * 0.42;
-    el.style.transform = `rotate(${angle}deg) translateY(-${lift}px)`;
+    el.style.setProperty('--angle', `${angle}deg`);
+    el.style.setProperty('--lift', `${lift}px`);
+    el.style.setProperty('--i', String(index));
+    el.style.transform = css;
     el.style.zIndex = String(index + 1);
 
-    if (onClick && !picked) {
-      el.addEventListener('click', onClick);
+    if (dealIn) el.classList.add('deal-in');
+
+    if (onClick) {
+      el.addEventListener('click', () => onClick(el));
     }
 
     container.appendChild(el);
   });
 }
 
+async function flyCardToRow(fromEl, rowEl) {
+  const from = fromEl.getBoundingClientRect();
+  const ghost = fromEl.cloneNode(true);
+  ghost.className = 'card card-ghost';
+  ghost.style.width = `${from.width}px`;
+  ghost.style.height = `${from.height}px`;
+  document.body.appendChild(ghost);
+
+  fromEl.classList.add('vanish');
+
+  const placeholder = document.createElement('span');
+  placeholder.className = 'picked-slot-marker';
+  rowEl.appendChild(placeholder);
+  const to = placeholder.getBoundingClientRect();
+
+  const dx = to.left + to.width / 2 - (from.left + from.width / 2);
+  const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+
+  await ghost.animate(
+    [
+      { transform: 'translate(0, 0) scale(1) rotate(0deg)', opacity: 1 },
+      {
+        transform: `translate(${dx * 0.55}px, ${dy * 0.35 - 28}px) scale(1.08) rotate(-6deg)`,
+        offset: 0.55,
+      },
+      {
+        transform: `translate(${dx}px, ${dy}px) scale(1) rotate(0deg)`,
+        opacity: 1,
+      },
+    ],
+    { duration: 520, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' },
+  ).finished;
+
+  ghost.remove();
+  placeholder.remove();
+}
+
 function setHint(text) {
-  $('#hint').textContent = text;
+  const el = $('#hint');
+  el.classList.add('hint-changing');
+  el.textContent = text;
+  requestAnimationFrame(() => el.classList.remove('hint-changing'));
 }
 
 function clearControls() {
   $('#controls').innerHTML = '';
 }
 
-function addControl(label, handler, opts = {}) {
+function addControl(label, handler) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'pill-btn';
   btn.textContent = label;
-  btn.disabled = !!opts.disabled;
   btn.addEventListener('click', handler);
   $('#controls').appendChild(btn);
-  return btn;
 }
 
 function ensureDeck(tierId) {
-  if (state.deckRemaining.length > 0) return;
+  if (state.deckRemaining.length > 0) return false;
   state.deckRemaining = shuffle(
     DECK[tierId].map((c) => ({ ...c, tierId })),
   );
+  return true;
 }
 
 function renderIdle() {
   state.phase = 'idle';
+  state.busy = false;
   $('#brand').classList.remove('hidden');
   setHint('點擊卡牌開始');
   $('#pickedRow').innerHTML = '';
@@ -127,31 +176,62 @@ function renderIdle() {
 
   const table = $('#table');
   table.innerHTML = '';
+  table.classList.remove('round-exit', 'round-enter', 'reveal-stage');
+
   const hero = makeCardEl({ id: 'hero', name: '開始' }, { hero: true });
-  hero.addEventListener('click', startGame);
+  hero.addEventListener('click', () => {
+    if (state.busy) return;
+    startGame();
+  });
   table.appendChild(hero);
 }
 
-function startGame() {
+async function startGame() {
+  state.busy = true;
   state.roundIndex = 0;
   state.roundPicks = [];
   state.deckRemaining = [];
   state.results = [];
   state.revealIndex = 0;
   state.phase = 'round';
-  renderRound();
+
+  const hero = $('#table .card.hero');
+  if (hero) {
+    await hero.animate(
+      [
+        { transform: 'rotate(4deg) scale(1)', opacity: 1 },
+        { transform: 'rotate(0deg) scale(0.6)', opacity: 0 },
+      ],
+      { duration: 320, easing: 'ease-in' },
+    ).finished;
+  }
+
+  await renderRound({ dealIn: true, shuffleFirst: true });
+  state.busy = false;
 }
 
 function roundHint(tier) {
   const picked = state.roundPicks.length;
   const need = tier.pickCount - picked;
-  if (need > 0) {
-    return `${tier.label} · 請從扇形中抽出 ${need} 張牌`;
-  }
+  if (need > 0) return `${tier.label} · 請從扇形中抽出 ${need} 張牌`;
   return `${tier.label} · 本輪完成`;
 }
 
-function renderRound() {
+async function showShuffleStack() {
+  const table = $('#table');
+  table.innerHTML = `
+    <div class="shuffle-stack">
+      <div class="card-face card-back stack-3"></div>
+      <div class="card-face card-back stack-2"></div>
+      <div class="card-face card-back stack-1"></div>
+    </div>`;
+  table.querySelectorAll('.card-back').forEach((el) => {
+    el.innerHTML = cardBackHtml();
+  });
+  await sleep(680);
+}
+
+async function renderRound({ dealIn = false, shuffleFirst = false } = {}) {
   const tierId = currentTierId();
   const tier = currentTier();
 
@@ -159,36 +239,44 @@ function renderRound() {
   setHint(roundHint(tier));
   clearControls();
 
-  ensureDeck(tierId);
+  const isFreshRound = ensureDeck(tierId);
+  const table = $('#table');
+
+  if (shuffleFirst && isFreshRound) {
+    await showShuffleStack();
+  }
 
   const pickedRow = $('#pickedRow');
   pickedRow.innerHTML = '';
-  state.roundPicks.forEach((card) => {
+  state.roundPicks.forEach((card, i) => {
     const el = makeCardEl(card, { inRow: true });
+    el.style.animationDelay = `${i * 60}ms`;
+    el.classList.add('landed');
     el.disabled = true;
     pickedRow.appendChild(el);
   });
 
   const fanEntries = state.deckRemaining.map((card) => ({
     card,
-    onClick: () => handlePick(card),
+    onClick: (el) => handlePick(card, el),
   }));
 
-  layoutFan($('#table'), fanEntries);
+  layoutFan(table, fanEntries, { dealIn: dealIn || isFreshRound });
 
   if (state.roundPicks.length === tier.pickCount) {
-    setTimeout(() => {
-      if (state.phase === 'round' && state.roundPicks.length === tier.pickCount) {
-        finishRound();
-      }
-    }, 700);
+    state.busy = true;
+    await sleep(850);
+    if (state.phase === 'round' && state.roundPicks.length === tier.pickCount) {
+      await finishRound();
+    }
+    state.busy = false;
   } else if (state.roundPicks.length > 0) {
     addControl('復原', undoLastPick);
   }
 }
 
-function handlePick(card) {
-  if (state.phase !== 'round') return;
+async function handlePick(card, fromEl) {
+  if (state.phase !== 'round' || state.busy) return;
 
   const tier = currentTier();
   if (state.roundPicks.length >= tier.pickCount) return;
@@ -196,21 +284,34 @@ function handlePick(card) {
   const idx = state.deckRemaining.findIndex((c) => c.id === card.id);
   if (idx < 0) return;
 
+  state.busy = true;
+  fromEl.classList.add('lift');
+
+  await sleep(120);
+  await flyCardToRow(fromEl, $('#pickedRow'));
+
   const [picked] = state.deckRemaining.splice(idx, 1);
   state.roundPicks.push(picked);
-  renderRound();
+
+  await renderRound();
+  state.busy = false;
 }
 
-function undoLastPick() {
-  if (!state.roundPicks.length || state.phase !== 'round') return;
-  const last = state.roundPicks.pop();
-  state.deckRemaining.push(last);
-  renderRound();
+async function undoLastPick() {
+  if (!state.roundPicks.length || state.phase !== 'round' || state.busy) return;
+  state.busy = true;
+  state.roundPicks.pop();
+  await renderRound({ dealIn: true });
+  state.busy = false;
 }
 
-function finishRound() {
+async function finishRound() {
   const tier = currentTier();
   if (state.roundPicks.length !== tier.pickCount) return;
+
+  const table = $('#table');
+  table.classList.add('round-exit');
+  await sleep(380);
 
   state.results.push(
     ...state.roundPicks.map((c) => ({
@@ -223,65 +324,131 @@ function finishRound() {
   state.roundIndex += 1;
 
   if (state.roundIndex >= ROUND_ORDER.length) {
-    startReveal();
+    await startReveal();
   } else {
-    renderRound();
+    table.classList.remove('round-exit');
+    table.classList.add('round-enter');
+    await renderRound({ dealIn: true, shuffleFirst: true });
+    table.classList.remove('round-enter');
   }
 }
 
-function startReveal() {
-  state.phase = 'reveal';
-  state.revealIndex = 0;
-  renderReveal();
+/** Visual layout before flip: row1 major×2 + gap + mutagen, row2 tierB×2, row3 tierC×2 */
+function revealLayoutRows(results) {
+  return [
+    [
+      { card: results[0], resultIndex: 0 },
+      { card: results[1], resultIndex: 1 },
+      { gap: true },
+      { card: results[6], resultIndex: 6 },
+    ],
+    [
+      { card: results[2], resultIndex: 2 },
+      { card: results[3], resultIndex: 3 },
+    ],
+    [
+      { card: results[4], resultIndex: 4 },
+      { card: results[5], resultIndex: 5 },
+    ],
+  ];
 }
 
-function renderReveal() {
-  setHint(`請翻開第 ${state.revealIndex + 1} 張牌（${state.revealIndex}/${state.results.length}）`);
-  $('#table').innerHTML = '';
-  clearControls();
+function revealCardEl(card, resultIndex, visualIndex) {
+  const el = makeCardEl(card, { inRow: true });
+  el.dataset.resultIndex = String(resultIndex);
+  el.style.setProperty('--i', String(visualIndex));
+  el.classList.add('reveal-card', 'deal-in');
+  if (resultIndex > 0) el.classList.add('waiting');
+  if (resultIndex === 0) el.classList.add('active-flip');
+  el.addEventListener('click', () => {
+    if (Number(el.dataset.resultIndex) === state.revealIndex) flipNext();
+  });
+  if (resultIndex !== 0) el.disabled = true;
+  return el;
+}
 
-  const row = document.createElement('div');
-  row.className = 'picked-row';
-  row.style.width = '100%';
+function renderRevealGrid() {
+  const table = $('#table');
+  table.innerHTML = '';
+  table.classList.add('reveal-stage');
 
-  state.results.forEach((card, i) => {
-    const el = makeCardEl(card, {
-      inRow: true,
-      flipped: i < state.revealIndex,
-      waiting: i > state.revealIndex,
-      activeFlip: i === state.revealIndex,
+  const grid = document.createElement('div');
+  grid.className = 'reveal-grid';
+  grid.id = 'revealGrid';
+
+  let visualIndex = 0;
+  revealLayoutRows(state.results).forEach((rowItems) => {
+    const line = document.createElement('div');
+    line.className = 'reveal-row-line';
+
+    rowItems.forEach((item) => {
+      if (item.gap) {
+        line.appendChild(document.createElement('span')).className = 'reveal-gap';
+        return;
+      }
+      line.appendChild(revealCardEl(item.card, item.resultIndex, visualIndex));
+      visualIndex += 1;
     });
 
-    if (i === state.revealIndex) {
-      el.addEventListener('click', flipNext);
-    } else {
-      el.disabled = true;
-    }
-
-    row.appendChild(el);
+    grid.appendChild(line);
   });
 
-  $('#pickedRow').innerHTML = '';
-  $('#pickedRow').appendChild(row);
-
-  if (state.revealIndex >= state.results.length) {
-    showDone();
-  }
+  table.appendChild(grid);
 }
 
-function flipNext() {
-  if (state.revealIndex >= state.results.length) return;
+function revealCardByIndex(index) {
+  return $('#revealGrid')?.querySelector(`[data-result-index="${index}"]`);
+}
+
+async function startReveal() {
+  state.phase = 'reveal';
+  state.revealIndex = 0;
+  $('#pickedRow').innerHTML = '';
+  $('#pickedRow').className = 'picked-row';
+  $('#table').classList.remove('round-exit', 'round-enter');
+  clearControls();
+  setHint(`請翻開第 1 張牌（0/${state.results.length}）`);
+
+  renderRevealGrid();
+
+  await sleep(Math.min(state.results.length * 80 + 420, 980));
+}
+
+async function flipNext() {
+  if (state.revealIndex >= state.results.length || state.busy) return;
+  state.busy = true;
+
+  const current = revealCardByIndex(state.revealIndex);
+  if (!current) {
+    state.busy = false;
+    return;
+  }
+
+  current.classList.remove('active-flip');
+  current.classList.add('flipping');
+  await sleep(80);
+  current.classList.add('flipped', 'revealed');
+  await sleep(720);
+
   state.revealIndex += 1;
+
   if (state.revealIndex >= state.results.length) {
     state.phase = 'done';
+    $('#revealGrid')
+      ?.querySelectorAll('.reveal-card')
+      .forEach((c) => c.classList.remove('waiting', 'active-flip', 'flipping'));
+    setHint('抽牌完成 · 七張牌已全部翻開');
+    clearControls();
+    addControl('重新抽牌', () => renderIdle());
+  } else {
+    const next = revealCardByIndex(state.revealIndex);
+    next?.classList.remove('waiting');
+    next?.classList.add('active-flip');
+    if (next) next.disabled = false;
+    setHint(`請翻開第 ${state.revealIndex + 1} 張牌（${state.revealIndex}/${state.results.length}）`);
   }
-  renderReveal();
-}
 
-function showDone() {
-  setHint('抽牌完成 · 七張牌已全部翻開');
-  clearControls();
-  addControl('重新抽牌', () => renderIdle());
+  state.busy = false;
 }
 
 function init() {
