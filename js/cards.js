@@ -7,9 +7,9 @@ export const TIERS = {
   major: {
     id: 'major',
     label: '主星',
-    subtitle: '請從 14 張主星中自行挑選 2 張',
+    subtitle: '從扇形牌陣中抽出 2 張',
     pickCount: 2,
-    mode: 'select',
+    mode: 'draw',
     color: '#1a237e',
     accent: '#c9a227',
   },

@@ -45,8 +45,7 @@ function makeCardEl(card, opts = {}) {
   btn.className = 'card';
   if (opts.hero) btn.classList.add('hero');
   if (opts.inRow) btn.classList.add('in-row');
-  if (opts.flipped || opts.faceUp) btn.classList.add('flipped', 'revealed');
-  if (opts.selected) btn.classList.add('selected');
+  if (opts.flipped) btn.classList.add('flipped', 'revealed');
   if (opts.waiting) btn.classList.add('waiting');
   if (opts.activeFlip) btn.classList.add('active-flip');
 
@@ -62,28 +61,30 @@ function makeCardEl(card, opts = {}) {
 
 function fanAngles(count) {
   if (count <= 1) return [0];
-  const spread = Math.min(8 + count * 3.8, 118);
+  const spread = Math.min(10 + count * 4.2, 128);
   const start = -spread / 2;
   const step = spread / (count - 1);
   return Array.from({ length: count }, (_, i) => start + step * i);
 }
 
-function layoutFan(container, cards, opts = {}) {
+function layoutFan(container, entries) {
   container.innerHTML = '';
-  const angles = fanAngles(cards.length);
+  const angles = fanAngles(entries.length);
 
-  cards.forEach((entry, index) => {
-    const { card, onClick, disabled, faceUp, selected, picked } = entry;
-    const el = makeCardEl(card, { faceUp, selected });
-    if (disabled || picked) el.disabled = true;
-    if (picked) el.classList.add('picked');
+  entries.forEach((entry, index) => {
+    const { card, onClick, picked } = entry;
+    const el = makeCardEl(card);
+    if (picked) {
+      el.disabled = true;
+      el.classList.add('picked');
+    }
 
     const angle = angles[index];
-    const lift = Math.abs(angle) * 0.35;
+    const lift = Math.abs(angle) * 0.42;
     el.style.transform = `rotate(${angle}deg) translateY(-${lift}px)`;
     el.style.zIndex = String(index + 1);
 
-    if (onClick && !disabled && !picked) {
+    if (onClick && !picked) {
       el.addEventListener('click', onClick);
     }
 
@@ -108,6 +109,13 @@ function addControl(label, handler, opts = {}) {
   btn.addEventListener('click', handler);
   $('#controls').appendChild(btn);
   return btn;
+}
+
+function ensureDeck(tierId) {
+  if (state.deckRemaining.length > 0) return;
+  state.deckRemaining = shuffle(
+    DECK[tierId].map((c) => ({ ...c, tierId })),
+  );
 }
 
 function renderIdle() {
@@ -137,50 +145,33 @@ function startGame() {
 function roundHint(tier) {
   const picked = state.roundPicks.length;
   const need = tier.pickCount - picked;
-  if (tier.mode === 'select') {
-    return need > 0 ? `請選出 ${tier.pickCount} 張主星（已選 ${picked} 張）` : '選牌完成';
+  if (need > 0) {
+    return `${tier.label} · 請從扇形中抽出 ${need} 張牌`;
   }
-  return need > 0 ? `請抽出 ${need} 張牌` : '本輪完成';
+  return `${tier.label} · 本輪完成`;
 }
 
 function renderRound() {
   const tierId = currentTierId();
   const tier = currentTier();
-  const deck = DECK[tierId];
 
   $('#brand').classList.add('hidden');
   setHint(roundHint(tier));
-  $('#pickedRow').innerHTML = '';
   clearControls();
 
+  ensureDeck(tierId);
+
+  const pickedRow = $('#pickedRow');
+  pickedRow.innerHTML = '';
   state.roundPicks.forEach((card) => {
-    const el = makeCardEl(card, {
-      inRow: true,
-      faceUp: tier.mode === 'select',
-    });
+    const el = makeCardEl(card, { inRow: true });
     el.disabled = true;
-    $('#pickedRow').appendChild(el);
+    pickedRow.appendChild(el);
   });
 
-  if (tier.mode === 'draw' && state.deckRemaining.length === 0) {
-    state.deckRemaining = shuffle(deck.map((c) => ({ ...c, tierId })));
-  }
-
-  const available = tier.mode === 'select'
-    ? deck.map((card) => ({ card, tierId }))
-    : state.deckRemaining.map((card) => ({ card, tierId: card.tierId || tierId }));
-
-  const pickedIds = new Set(state.roundPicks.map((c) => c.id));
-
-  const fanEntries = available.map(({ card }) => ({
+  const fanEntries = state.deckRemaining.map((card) => ({
     card,
-    faceUp: tier.mode === 'select',
-    selected: state.roundPicks.some((c) => c.id === card.id),
-    picked: false,
-    disabled: tier.mode === 'select' &&
-      state.roundPicks.length >= tier.pickCount &&
-      !state.roundPicks.some((c) => c.id === card.id),
-    onClick: () => handlePick(card, tierId, tier),
+    onClick: () => handlePick(card),
   }));
 
   layoutFan($('#table'), fanEntries);
@@ -190,40 +181,28 @@ function renderRound() {
       if (state.phase === 'round' && state.roundPicks.length === tier.pickCount) {
         finishRound();
       }
-    }, 650);
-  }
-
-  if (state.roundPicks.length > 0 && tier.mode === 'draw') {
+    }, 700);
+  } else if (state.roundPicks.length > 0) {
     addControl('復原', undoLastPick);
   }
 }
 
-function handlePick(card, tierId, tier) {
+function handlePick(card) {
   if (state.phase !== 'round') return;
 
-  if (tier.mode === 'select') {
-    const idx = state.roundPicks.findIndex((c) => c.id === card.id);
-    if (idx >= 0) {
-      state.roundPicks.splice(idx, 1);
-    } else if (state.roundPicks.length < tier.pickCount) {
-      state.roundPicks.push({ ...card, tierId });
-    }
-    renderRound();
-    return;
-  }
-
+  const tier = currentTier();
   if (state.roundPicks.length >= tier.pickCount) return;
+
   const idx = state.deckRemaining.findIndex((c) => c.id === card.id);
   if (idx < 0) return;
+
   const [picked] = state.deckRemaining.splice(idx, 1);
-  state.roundPicks.push({ ...picked, tierId });
+  state.roundPicks.push(picked);
   renderRound();
 }
 
 function undoLastPick() {
   if (!state.roundPicks.length || state.phase !== 'round') return;
-  const tier = currentTier();
-  if (tier.mode !== 'draw') return;
   const last = state.roundPicks.pop();
   state.deckRemaining.push(last);
   renderRound();
