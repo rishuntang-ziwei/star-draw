@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>全知之眼 · 先知斗數神牌</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <h1>全知之眼</h1>
+        <p>先知斗數神牌 · 主星自選 · 輔星抽牌 · 四化收尾 · 依序翻開</p>
+      </header>
+
+      <section id="welcome" class="stage">
+        <div class="stage-head">
+          <h2>抽牌流程</h2>
+          <p>
+            第一輪：14 張主星自選 2 張<br />
+            第二輪：14 張乙級輔星抽 2 張<br />
+            第三輪：12 張丙級輔星抽 2 張<br />
+            第四輪：四化 + 空牌抽 1 張<br />
+            最後依序翻開全部 7 張牌
+          </p>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="startBtn">開始抽牌</button>
+        </div>
+      </section>
+
+      <div id="game" class="hidden">
+        <nav class="progress" id="progress" aria-label="抽牌進度"></nav>
+
+        <section class="stage">
+          <div class="stage-head">
+            <h2 id="stageTitle"></h2>
+            <p id="stageSubtitle"></p>
+          </div>
+          <p class="pick-counter" id="pickCounter"></p>
+
+          <div class="card-grid" id="cardGrid"></div>
+          <div class="draw-deck hidden" id="drawArea"></div>
+
+          <div class="actions" id="actions"></div>
+        </section>
+      </div>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
