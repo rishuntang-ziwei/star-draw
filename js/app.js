@@ -349,8 +349,7 @@ function revealLayoutRows(results) {
     [
       { card: results[0], resultIndex: 0 },
       { card: results[1], resultIndex: 1 },
-      { gap: true },
-      { card: results[6], resultIndex: 6 },
+      { card: results[6], resultIndex: 6, column: 4 },
     ],
     [
       { card: results[2], resultIndex: 2 },
@@ -388,19 +387,12 @@ function renderRevealGrid() {
 
   let visualIndex = 0;
   revealLayoutRows(state.results).forEach((rowItems) => {
-    const line = document.createElement('div');
-    line.className = 'reveal-row-line';
-
     rowItems.forEach((item) => {
-      if (item.gap) {
-        line.appendChild(document.createElement('span')).className = 'reveal-gap';
-        return;
-      }
-      line.appendChild(revealCardEl(item.card, item.resultIndex, visualIndex));
+      const el = revealCardEl(item.card, item.resultIndex, visualIndex);
+      if (item.column) el.style.gridColumn = String(item.column);
+      grid.appendChild(el);
       visualIndex += 1;
     });
-
-    grid.appendChild(line);
   });
 
   table.appendChild(grid);

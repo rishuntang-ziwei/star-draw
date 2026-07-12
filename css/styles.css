@@ -231,25 +231,21 @@ body::before {
 }
 
 .reveal-grid {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(16px, 3.2vh, 26px);
-  align-items: center;
+  display: grid;
+  grid-template-columns:
+    var(--card-w)
+    var(--card-w)
+    calc(var(--card-w) * 0.5)
+    var(--card-w);
+  column-gap: clamp(12px, 2.8vw, 18px);
+  row-gap: clamp(16px, 3.2vh, 26px);
+  justify-content: center;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
   --card-w: clamp(112px, 22vw, 176px);
   --card-h: calc(var(--card-w) * 1.55);
   padding: 8px 12px 4px;
-}
-
-.reveal-row-line {
-  display: flex;
-  gap: clamp(12px, 2.8vw, 18px);
-  justify-content: center;
-  align-items: center;
-}
-
-.reveal-gap {
-  width: calc(var(--card-w) * 0.5);
-  flex-shrink: 0;
 }
 
 .picked-slot-marker {
