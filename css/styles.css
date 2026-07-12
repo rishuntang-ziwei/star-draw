@@ -512,6 +512,121 @@ body::before {
   display: none !important;
 }
 
+.question-dialog {
+  max-width: 460px;
+}
+
+.question-hint {
+  margin: 0 0 12px;
+  color: #555;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.question-input {
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: 1rem;
+  resize: vertical;
+  min-height: 88px;
+  margin-bottom: 16px;
+}
+
+.question-input:focus {
+  outline: 2px solid rgba(201, 162, 39, 0.45);
+  border-color: rgba(201, 162, 39, 0.65);
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.question-skip {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.reading-panel {
+  width: min(100%, 720px);
+  margin: 20px auto 0;
+  padding: 18px 20px 22px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(6px);
+}
+
+.reading-panel[data-source='ai'] .reading-title::after {
+  content: ' · AI';
+  font-size: 0.85rem;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.reading-title {
+  margin: 0 0 10px;
+  font-size: 1.15rem;
+}
+
+.reading-question {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.reading-loading {
+  margin: 0;
+  color: var(--muted);
+  text-align: center;
+  padding: 12px 0;
+}
+
+.reading-cards {
+  display: grid;
+  gap: 12px;
+}
+
+.reading-item {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.reading-item h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  color: #111;
+}
+
+.reading-item p {
+  margin: 0;
+  line-height: 1.65;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.reading-synthesis {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.reading-synthesis h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.reading-synthesis p {
+  margin: 0;
+  line-height: 1.7;
+  color: #222;
+}
+
 @media (max-width: 640px) {
   .brand {
     letter-spacing: 0.22em;
@@ -539,6 +654,11 @@ body::before {
   .reveal-grid {
     --card-w: clamp(96px, 26vw, 132px);
     gap: 12px;
+  }
+
+  .reading-panel {
+    margin-top: 14px;
+    padding: 14px 14px 18px;
   }
 }
 

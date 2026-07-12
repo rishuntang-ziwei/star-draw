@@ -26,6 +26,16 @@ npx http-server . -p 8080
 - `assets/ui/card-back.png` — 牌背
 - `assets/ui/background.png` — 抽牌背景
 
-## 修改牌組
+## AI 解讀（選用）
 
-編輯 `js/cards.js` 中的 `DECK` 物件。
+翻完七張牌後會顯示簡易解讀。預設使用內建模板；若要像 Taroscope 一樣用 OpenAI 生成：
+
+1. 在 Render 部署 `server/`（設定 `OPENAI_API_KEY`）
+2. 於 `index.html` 設定 `window.INTERPRET_API = 'https://你的-api.onrender.com'`
+
+本地測試 API：
+
+```bash
+cd server && npm install && OPENAI_API_KEY=sk-... npm start
+```
+
