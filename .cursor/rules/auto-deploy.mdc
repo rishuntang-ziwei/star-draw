@@ -1,0 +1,20 @@
+---
+description: Auto-commit and push star-draw changes to GitHub Pages without asking
+alwaysApply: true
+---
+
+# star-draw 自動部署
+
+完成本專案任何修改後，**直接 commit 並 push 到 `main`**，不用再問用戶是否要 push 或上線。
+
+## 流程
+
+1. 修改完成後執行 `git status` / `git diff` 確認變更
+2. 若有變更：stage → commit（簡短說明 why）→ `git push origin main`
+3. 回覆用戶時附上 commit hash 與線上網址：https://rishuntang-ziwei.github.io/star-draw/
+
+## 注意
+
+- 不要 commit 含 secrets 的檔案（如 `.env`）
+- 不要 force push
+- 不要改 git config；commit author 用 env：`estinto0310@users.noreply.github.com`
