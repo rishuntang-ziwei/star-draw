@@ -220,11 +220,15 @@ async function startGame() {
   state.busy = false;
 }
 
-function roundHint(tier) {
-  const picked = state.roundPicks.length;
-  const need = tier.pickCount - picked;
-  if (need > 0) return `${tier.label} · 請從牌陣中抽出 ${need} 張牌`;
-  return `${tier.label} · 本輪完成`;
+const ROUND_HINTS = [
+  '第一輪請在這14張牌選擇2張',
+  '第二輪請在這14張牌選擇2張',
+  '第三輪請在這12張牌選擇2張',
+  '最後請在這5張牌裡選擇1張',
+];
+
+function roundHint() {
+  return ROUND_HINTS[state.roundIndex] || ROUND_HINTS[0];
 }
 
 async function showShuffleStack() {
@@ -246,7 +250,7 @@ async function renderRound({ dealIn = false, shuffleFirst = false } = {}) {
   const tier = currentTier();
 
   $('#brand').classList.add('hidden');
-  setHint(roundHint(tier));
+  setHint(roundHint());
   clearControls();
 
   const isFreshRound = ensureDeck(tierId);
@@ -449,7 +453,7 @@ async function flipNext() {
     $('#revealGrid')
       ?.querySelectorAll('.reveal-card')
       .forEach((c) => c.classList.remove('waiting', 'active-flip', 'flipping'));
-    setHint('抽牌完成 · 七張牌已全部翻開');
+    setHint('抽牌完成 請與老師討論解說');
     clearControls();
     addControl('重新抽牌', () => renderIdle());
   } else {
