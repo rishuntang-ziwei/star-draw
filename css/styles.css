@@ -277,9 +277,9 @@ body::before {
 
 .wuxing-title {
   margin: 0;
-  font-size: clamp(0.82rem, 2.2vw, 0.95rem);
+  font-size: clamp(0.95rem, 2.8vw, 1.12rem);
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   color: #333;
   flex-shrink: 0;
 }
@@ -291,51 +291,38 @@ body::before {
   display: block;
 }
 
-.wuxing-ring {
-  fill: none;
-  stroke: rgba(0, 0, 0, 0.12);
-  stroke-width: 1.8;
-  stroke-dasharray: 5 4;
-}
-
+.wuxing-arc,
 .wuxing-edge {
-  stroke: rgba(0, 0, 0, 0.22);
-  stroke-width: 2;
+  stroke: #333;
+  stroke-width: 1.6;
   fill: none;
 }
 
 .wuxing-node-name {
-  fill: #fff;
-  font-size: 16px;
+  font-size: 26px;
   font-weight: 700;
   font-family: "Noto Serif TC", "PingFang TC", "Microsoft JhengHei", serif;
 }
 
 .wuxing-node-count {
-  fill: #fff;
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 700;
   font-family: "Noto Serif TC", "PingFang TC", "Microsoft JhengHei", serif;
-}
-
-.wuxing-node:not(.is-active) .wuxing-node-name,
-.wuxing-node:not(.is-active) .wuxing-node-count {
-  fill: #666;
 }
 
 .wuxing-summary {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 5px;
   justify-content: center;
-  margin-top: 4px;
+  margin-top: 2px;
   flex-shrink: 0;
 }
 
 .wuxing-chip {
-  font-size: clamp(0.62rem, 1.8vw, 0.72rem);
+  font-size: clamp(0.72rem, 2.2vw, 0.82rem);
   font-weight: 700;
-  padding: 2px 7px;
+  padding: 3px 8px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--wx-color) 18%, white);
   border: 1px solid color-mix(in srgb, var(--wx-color) 55%, white);
