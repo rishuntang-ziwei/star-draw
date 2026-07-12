@@ -215,7 +215,7 @@ function renderReading(reading) {
     const article = document.createElement('article');
     article.className = 'reading-item';
     const title = document.createElement('h3');
-    title.textContent = item.name;
+    title.textContent = item.role ? `${item.name} · ${item.role}` : item.name;
     const body = document.createElement('p');
     body.textContent = item.brief;
     article.append(title, body);
@@ -228,7 +228,7 @@ function renderReading(reading) {
   if (reading.source === 'ai') {
     panel.dataset.source = 'ai';
   } else {
-    delete panel.dataset.source;
+    panel.dataset.source = 'builtin';
   }
 
   panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

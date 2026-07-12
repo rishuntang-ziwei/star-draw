@@ -12,7 +12,7 @@
     />
     <link rel="stylesheet" href="css/styles.css" />
     <script>
-      // 部署 AI 解讀後端後填入，例如 https://your-api.onrender.com
+      // 若日後有 OpenAI 後端可填入 API 網址；未設定則使用內建解讀引擎
       window.INTERPRET_API = window.INTERPRET_API || '';
     </script>
   </head>
@@ -35,7 +35,7 @@
         <div class="controls" id="controls"></div>
 
         <section class="reading-panel hidden" id="readingPanel" aria-live="polite">
-          <h2 class="reading-title">牌陣解讀</h2>
+          <h2 class="reading-title">神牌解讀</h2>
           <p class="reading-question hidden" id="readingQuestion"></p>
           <div class="reading-cards" id="readingCards"></div>
           <div class="reading-synthesis hidden" id="readingSynthesis">

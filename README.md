@@ -26,16 +26,16 @@ npx http-server . -p 8080
 - `assets/ui/card-back.png` — 牌背
 - `assets/ui/background.png` — 抽牌背景
 
-## AI 解讀（選用）
+## 神牌解讀
 
-翻完七張牌後會顯示簡易解讀。預設使用內建模板；若要像 Taroscope 一樣用 OpenAI 生成：
+翻完七張牌後會自動生成簡易解讀（每張牌一段＋綜合），**不需 API Key**，使用內建解讀引擎：
 
-1. 在 Render 部署 `server/`（設定 `OPENAI_API_KEY`）
-2. 於 `index.html` 設定 `window.INTERPRET_API = 'https://你的-api.onrender.com'`
+- 可選填問題，解讀會依工作／感情／財務等主題調整語氣
+- 主星、乙級、丙級、四化各有不同解讀角度
 
-本地測試 API：
+若日後有 OpenAI API，可選用 `server/` 部署後端並設定 `window.INTERPRET_API`。
 
-```bash
-cd server && npm install && OPENAI_API_KEY=sk-... npm start
-```
+## 修改牌組
+
+編輯 `js/cards.js` 中的 `DECK` 物件。
 
