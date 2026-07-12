@@ -42,7 +42,7 @@ export function buildWuxingPanel(counts) {
     const active = count > 0;
     return `
       <g class="wuxing-node${active ? ' is-active' : ''}">
-        <circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="22"
+        <circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="26"
           fill="${active ? color : '#f5f5f5'}"
           stroke="${color}" stroke-width="${active ? 3 : 2}" />
         <text x="${point.x.toFixed(1)}" y="${(point.y - 2).toFixed(1)}"
