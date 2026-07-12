@@ -47,7 +47,7 @@ function makeCardEl(card, opts = {}) {
   btn.className = 'card';
   if (opts.hero) btn.classList.add('hero');
   if (opts.inRow) btn.classList.add('in-row');
-  if (opts.inSpread) btn.classList.add('in-spread');
+  if (opts.inStack) btn.classList.add('in-stack');
   if (opts.flipped) btn.classList.add('flipped', 'revealed');
   if (opts.waiting) btn.classList.add('waiting');
   if (opts.activeFlip) btn.classList.add('active-flip');
@@ -62,18 +62,44 @@ function makeCardEl(card, opts = {}) {
   return btn;
 }
 
-function layoutSpread(container, entries, { dealIn = false } = {}) {
-  container.innerHTML = '';
-  container.classList.add('spread-stage');
+function stackLayout(count) {
+  if (count <= 1) return [{ x: 0, angle: 0, lift: 0 }];
 
-  const row = document.createElement('div');
-  row.className = 'spread-row';
-  if (entries.length <= 7) row.classList.add('compact');
+  const step = Math.min(48, Math.max(30, 620 / count));
+  const mid = (count - 1) / 2;
+  const spread = Math.min(20 + count * 6.2, 156);
+  const angleStart = -spread / 2;
+  const angleStep = spread / (count - 1);
+
+  return Array.from({ length: count }, (_, i) => {
+    const angle = angleStart + angleStep * i;
+    const x = (i - mid) * step;
+    const lift = Math.abs(angle) * 0.48;
+    return { x, angle, lift };
+  });
+}
+
+function stackTransform({ x, angle, lift }) {
+  return `translateX(${x}px) rotate(${angle}deg) translateY(-${lift}px)`;
+}
+
+function layoutStack(container, entries, { dealIn = false } = {}) {
+  container.innerHTML = '';
+  container.classList.add('stack-stage');
+
+  const layout = stackLayout(entries.length);
 
   entries.forEach((entry, index) => {
     const { card, onClick } = entry;
-    const el = makeCardEl(card, { inSpread: true });
+    const el = makeCardEl(card, { inStack: true });
+    const { x, angle, lift } = layout[index];
+
+    el.style.setProperty('--x', `${x}px`);
+    el.style.setProperty('--angle', `${angle}deg`);
+    el.style.setProperty('--lift', `${lift}px`);
     el.style.setProperty('--i', String(index));
+    el.style.transform = stackTransform({ x, angle, lift });
+    el.style.zIndex = String(index + 1);
 
     if (dealIn) el.classList.add('deal-in');
 
@@ -81,10 +107,8 @@ function layoutSpread(container, entries, { dealIn = false } = {}) {
       el.addEventListener('click', () => onClick(el));
     }
 
-    row.appendChild(el);
+    container.appendChild(el);
   });
-
-  container.appendChild(row);
 }
 
 async function flyCardToRow(fromEl, rowEl) {
@@ -162,7 +186,7 @@ function renderIdle() {
 
   const table = $('#table');
   table.innerHTML = '';
-  table.classList.remove('round-exit', 'round-enter', 'reveal-stage', 'spread-stage');
+  table.classList.remove('round-exit', 'round-enter', 'reveal-stage', 'stack-stage');
 
   const hero = makeCardEl({ id: 'hero', name: '開始' }, { hero: true });
   hero.addEventListener('click', () => {
@@ -199,7 +223,7 @@ async function startGame() {
 function roundHint(tier) {
   const picked = state.roundPicks.length;
   const need = tier.pickCount - picked;
-  if (need > 0) return `${tier.label} · 請從牌列中抽出 ${need} 張牌`;
+  if (need > 0) return `${tier.label} · 請從牌陣中抽出 ${need} 張牌`;
   return `${tier.label} · 本輪完成`;
 }
 
@@ -242,12 +266,12 @@ async function renderRound({ dealIn = false, shuffleFirst = false } = {}) {
     pickedRow.appendChild(el);
   });
 
-  const spreadEntries = state.deckRemaining.map((card) => ({
+  const stackEntries = state.deckRemaining.map((card) => ({
     card,
     onClick: (el) => handlePick(card, el),
   }));
 
-  layoutSpread(table, spreadEntries, { dealIn: dealIn || isFreshRound });
+  layoutStack(table, stackEntries, { dealIn: dealIn || isFreshRound });
 
   if (state.roundPicks.length === tier.pickCount) {
     state.busy = true;
