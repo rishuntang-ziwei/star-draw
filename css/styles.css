@@ -257,7 +257,7 @@ body::before {
   border: 2px solid #5c4033;
   border-radius: 10px;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
-  justify-self: center;
+  justify-self: start;
   align-self: start;
   z-index: 2;
   text-align: center;

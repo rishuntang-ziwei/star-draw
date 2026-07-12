@@ -401,7 +401,7 @@ function renderRevealGrid() {
   const wuxing = document.createElement('div');
   wuxing.className = 'wuxing-panel hidden';
   wuxing.id = 'wuxingPanel';
-  wuxing.style.gridColumn = '3';
+  wuxing.style.gridColumn = '4';
   wuxing.style.gridRow = '2';
   grid.appendChild(wuxing);
 
