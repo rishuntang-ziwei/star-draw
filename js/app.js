@@ -1,4 +1,5 @@
 import { DECK, ROUND_ORDER, TIERS, CARD_BACK } from './cards.js';
+import { buildWuxingPanel, countElements } from './wuxing.js';
 
 const $ = (sel) => document.querySelector(sel);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -345,26 +346,6 @@ async function finishRound() {
   }
 }
 
-/** Visual layout before flip: row1 major×2 + gap + mutagen, row2 tierB×2, row3 tierC×2 */
-function revealLayoutRows(results) {
-  return [
-    [
-      { card: results[0], resultIndex: 0 },
-      { card: results[1], resultIndex: 1 },
-      { gap: true },
-      { card: results[6], resultIndex: 6 },
-    ],
-    [
-      { card: results[2], resultIndex: 2 },
-      { card: results[3], resultIndex: 3 },
-    ],
-    [
-      { card: results[4], resultIndex: 4 },
-      { card: results[5], resultIndex: 5 },
-    ],
-  ];
-}
-
 function revealCardEl(card, resultIndex, visualIndex) {
   const el = makeCardEl(card, { inRow: true });
   el.dataset.resultIndex = String(resultIndex);
@@ -388,26 +369,50 @@ function renderRevealGrid() {
   grid.className = 'reveal-grid';
   grid.id = 'revealGrid';
 
+  const placements = [
+    { card: state.results[0], resultIndex: 0, col: 1, row: 1 },
+    { card: state.results[1], resultIndex: 1, col: 2, row: 1 },
+    { gap: true, col: 3, row: 1 },
+    { card: state.results[6], resultIndex: 6, col: 4, row: 1 },
+    { card: state.results[2], resultIndex: 2, col: 1, row: 2 },
+    { card: state.results[3], resultIndex: 3, col: 2, row: 2 },
+    { card: state.results[4], resultIndex: 4, col: 1, row: 3 },
+    { card: state.results[5], resultIndex: 5, col: 2, row: 3 },
+  ];
+
   let visualIndex = 0;
-  revealLayoutRows(state.results).forEach((rowItems) => {
-    const line = document.createElement('div');
-    line.className = 'reveal-row-line';
+  placements.forEach((item) => {
+    if (item.gap) {
+      const gap = document.createElement('span');
+      gap.className = 'reveal-gap';
+      gap.style.gridColumn = String(item.col);
+      gap.style.gridRow = String(item.row);
+      grid.appendChild(gap);
+      return;
+    }
 
-    rowItems.forEach((item) => {
-      if (item.gap) {
-        const gap = document.createElement('span');
-        gap.className = 'reveal-gap';
-        line.appendChild(gap);
-        return;
-      }
-      line.appendChild(revealCardEl(item.card, item.resultIndex, visualIndex));
-      visualIndex += 1;
-    });
-
-    grid.appendChild(line);
+    const el = revealCardEl(item.card, item.resultIndex, visualIndex);
+    el.style.gridColumn = String(item.col);
+    el.style.gridRow = String(item.row);
+    grid.appendChild(el);
+    visualIndex += 1;
   });
 
+  const wuxing = document.createElement('div');
+  wuxing.className = 'wuxing-panel hidden';
+  wuxing.id = 'wuxingPanel';
+  wuxing.style.gridColumn = '3';
+  wuxing.style.gridRow = '2 / 4';
+  grid.appendChild(wuxing);
+
   table.appendChild(grid);
+}
+
+function showWuxingPanel() {
+  const panel = $('#wuxingPanel');
+  if (!panel) return;
+  panel.innerHTML = buildWuxingPanel(countElements(state.results));
+  panel.classList.remove('hidden');
 }
 
 function revealCardByIndex(index) {
@@ -454,6 +459,7 @@ async function flipNext() {
     setHint('抽牌完成 請與老師討論解說');
     clearControls();
     addControl('重新抽牌', () => renderIdle());
+    showWuxingPanel();
   } else {
     const next = revealCardByIndex(state.revealIndex);
     next?.classList.remove('waiting');

@@ -221,16 +221,6 @@ body::before {
 }
 
 .reveal-grid {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(16px, 3.2vh, 26px);
-  align-items: center;
-  --card-w: clamp(112px, 22vw, 176px);
-  --card-h: calc(var(--card-w) * 1.55);
-  padding: 8px 12px 4px;
-}
-
-.reveal-row-line {
   display: grid;
   grid-template-columns:
     var(--card-w)
@@ -238,12 +228,103 @@ body::before {
     calc(var(--card-w) * 0.5)
     var(--card-w);
   column-gap: clamp(12px, 2.8vw, 18px);
-  align-items: center;
+  row-gap: clamp(16px, 3.2vh, 26px);
+  justify-content: center;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  --card-w: clamp(112px, 22vw, 176px);
+  --card-h: calc(var(--card-w) * 1.55);
+  padding: 8px 12px 4px;
 }
 
 .reveal-gap {
   width: 100%;
   height: 1px;
+}
+
+.wuxing-panel {
+  align-self: start;
+  justify-self: center;
+  width: min(100%, calc(var(--card-w) * 1.15));
+  padding: 6px 4px 2px;
+  text-align: center;
+  animation: wuxingIn 0.65s var(--ease-out) both;
+}
+
+.wuxing-panel.hidden {
+  display: none;
+}
+
+@keyframes wuxingIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.92);
+  }
+}
+
+.wuxing-title {
+  margin: 0 0 4px;
+  font-size: clamp(0.72rem, 2vw, 0.82rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #333;
+}
+
+.wuxing-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.wuxing-ring {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.1);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
+.wuxing-edge {
+  stroke: rgba(0, 0, 0, 0.18);
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.wuxing-node-name {
+  fill: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: "Noto Serif TC", "PingFang TC", "Microsoft JhengHei", serif;
+}
+
+.wuxing-node-count {
+  fill: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: "Noto Serif TC", "PingFang TC", "Microsoft JhengHei", serif;
+}
+
+.wuxing-node:not(.is-active) .wuxing-node-name,
+.wuxing-node:not(.is-active) .wuxing-node-count {
+  fill: #666;
+}
+
+.wuxing-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.wuxing-chip {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--wx-color) 18%, white);
+  border: 1px solid color-mix(in srgb, var(--wx-color) 55%, white);
+  color: #222;
 }
 
 .picked-slot-marker {
@@ -536,7 +617,11 @@ body::before {
 
   .reveal-grid {
     --card-w: clamp(96px, 26vw, 132px);
-    gap: 12px;
+    row-gap: 12px;
+  }
+
+  .wuxing-panel {
+    width: min(100%, calc(var(--card-w) * 1.05));
   }
 }
 
