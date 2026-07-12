@@ -179,7 +179,6 @@ function ensureDeck(tierId) {
 function renderIdle() {
   state.phase = 'idle';
   state.busy = false;
-  $('#brand').classList.remove('hidden');
   setHint('點擊卡牌開始');
   $('#pickedRow').innerHTML = '';
   clearControls();
@@ -249,7 +248,6 @@ async function renderRound({ dealIn = false, shuffleFirst = false } = {}) {
   const tierId = currentTierId();
   const tier = currentTier();
 
-  $('#brand').classList.add('hidden');
   setHint(roundHint());
   clearControls();
 
