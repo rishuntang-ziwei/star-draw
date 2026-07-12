@@ -7,7 +7,7 @@ export const TIERS = {
   major: {
     id: 'major',
     label: '主星',
-    subtitle: '從扇形牌陣中抽出 2 張',
+    subtitle: '從牌列中抽出 2 張',
     pickCount: 2,
     mode: 'draw',
     color: '#1a237e',

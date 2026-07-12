@@ -47,7 +47,7 @@ function makeCardEl(card, opts = {}) {
   btn.className = 'card';
   if (opts.hero) btn.classList.add('hero');
   if (opts.inRow) btn.classList.add('in-row');
-  if (opts.inFan) btn.classList.add('in-fan');
+  if (opts.inSpread) btn.classList.add('in-spread');
   if (opts.flipped) btn.classList.add('flipped', 'revealed');
   if (opts.waiting) btn.classList.add('waiting');
   if (opts.activeFlip) btn.classList.add('active-flip');
@@ -62,34 +62,18 @@ function makeCardEl(card, opts = {}) {
   return btn;
 }
 
-function fanAngles(count) {
-  if (count <= 1) return [0];
-  const spread = Math.min(10 + count * 4.2, 128);
-  const start = -spread / 2;
-  const step = spread / (count - 1);
-  return Array.from({ length: count }, (_, i) => start + step * i);
-}
-
-function fanTransform(angle) {
-  const lift = Math.abs(angle) * 0.42;
-  return { angle, lift, css: `rotate(${angle}deg) translateY(-${lift}px)` };
-}
-
-function layoutFan(container, entries, { dealIn = false } = {}) {
+function layoutSpread(container, entries, { dealIn = false } = {}) {
   container.innerHTML = '';
-  container.classList.toggle('is-dealing', dealIn);
-  const angles = fanAngles(entries.length);
+  container.classList.add('spread-stage');
+
+  const row = document.createElement('div');
+  row.className = 'spread-row';
+  if (entries.length <= 7) row.classList.add('compact');
 
   entries.forEach((entry, index) => {
     const { card, onClick } = entry;
-    const el = makeCardEl(card, { inFan: true });
-    const { angle, lift, css } = fanTransform(angles[index]);
-
-    el.style.setProperty('--angle', `${angle}deg`);
-    el.style.setProperty('--lift', `${lift}px`);
+    const el = makeCardEl(card, { inSpread: true });
     el.style.setProperty('--i', String(index));
-    el.style.transform = css;
-    el.style.zIndex = String(index + 1);
 
     if (dealIn) el.classList.add('deal-in');
 
@@ -97,8 +81,10 @@ function layoutFan(container, entries, { dealIn = false } = {}) {
       el.addEventListener('click', () => onClick(el));
     }
 
-    container.appendChild(el);
+    row.appendChild(el);
   });
+
+  container.appendChild(row);
 }
 
 async function flyCardToRow(fromEl, rowEl) {
@@ -176,7 +162,7 @@ function renderIdle() {
 
   const table = $('#table');
   table.innerHTML = '';
-  table.classList.remove('round-exit', 'round-enter', 'reveal-stage');
+  table.classList.remove('round-exit', 'round-enter', 'reveal-stage', 'spread-stage');
 
   const hero = makeCardEl({ id: 'hero', name: '開始' }, { hero: true });
   hero.addEventListener('click', () => {
@@ -213,7 +199,7 @@ async function startGame() {
 function roundHint(tier) {
   const picked = state.roundPicks.length;
   const need = tier.pickCount - picked;
-  if (need > 0) return `${tier.label} · 請從扇形中抽出 ${need} 張牌`;
+  if (need > 0) return `${tier.label} · 請從牌列中抽出 ${need} 張牌`;
   return `${tier.label} · 本輪完成`;
 }
 
@@ -256,12 +242,12 @@ async function renderRound({ dealIn = false, shuffleFirst = false } = {}) {
     pickedRow.appendChild(el);
   });
 
-  const fanEntries = state.deckRemaining.map((card) => ({
+  const spreadEntries = state.deckRemaining.map((card) => ({
     card,
     onClick: (el) => handlePick(card, el),
   }));
 
-  layoutFan(table, fanEntries, { dealIn: dealIn || isFreshRound });
+  layoutSpread(table, spreadEntries, { dealIn: dealIn || isFreshRound });
 
   if (state.roundPicks.length === tier.pickCount) {
     state.busy = true;

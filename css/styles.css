@@ -170,6 +170,40 @@ body::before {
   padding: 0 8px;
 }
 
+.table.spread-stage {
+  height: auto;
+  min-height: calc(var(--card-h) + 56px);
+  align-items: center;
+  justify-content: flex-start;
+  overflow: visible;
+}
+
+.spread-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: clamp(22px, 3.6vw, 40px);
+  justify-content: flex-start;
+  align-items: flex-end;
+  width: 100%;
+  max-width: 100%;
+  padding: 16px 24px 28px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  --card-w: clamp(96px, 11vw, 124px);
+  --card-h: calc(var(--card-w) * 1.55);
+}
+
+.spread-row::-webkit-scrollbar {
+  height: 6px;
+}
+
+.spread-row::-webkit-scrollbar-thumb {
+  background: rgba(26, 26, 26, 0.22);
+  border-radius: 999px;
+}
+
 .table.reveal-stage {
   height: auto;
   min-height: clamp(340px, 58svh, 560px);
@@ -237,41 +271,54 @@ body::before {
   cursor: default;
 }
 
-.card.in-fan:not(:disabled):hover {
-  transform: rotate(var(--angle)) translateY(calc(-1 * var(--lift) - 18px)) scale(1.05) !important;
+.spread-row.compact {
+  justify-content: center;
+  overflow-x: visible;
+}
+
+.card.in-spread {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  margin-left: 0;
+  flex-shrink: 0;
+  scroll-snap-align: center;
+  transform: none;
+  transform-origin: center center;
+}
+
+.card.in-spread:not(:disabled):hover {
+  transform: translateY(-20px) scale(1.06) !important;
   z-index: 300 !important;
   filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.28));
 }
 
-.card.in-fan.lift {
-  transform: rotate(var(--angle)) translateY(calc(-1 * var(--lift) - 32px)) scale(1.1) !important;
+.card.in-spread.lift {
+  transform: translateY(-36px) scale(1.1) !important;
   z-index: 400 !important;
   filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.32));
   transition-duration: 0.18s;
 }
 
-.card.in-fan.vanish {
+.card.in-spread.vanish {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.15s ease;
 }
 
-.card.deal-in {
-  animation: fanDeal 0.62s var(--ease-out) both;
-  animation-delay: calc(var(--i) * 22ms);
+.card.in-spread.deal-in {
+  animation: spreadDeal 0.58s var(--ease-out) both;
+  animation-delay: calc(var(--i) * 28ms);
 }
 
-@keyframes fanDeal {
+@keyframes spreadDeal {
   0% {
     opacity: 0;
-    transform: rotate(0deg) translateY(36px) scale(0.72);
-  }
-  70% {
-    opacity: 1;
+    transform: translateY(32px) scale(0.86);
   }
   100% {
     opacity: 1;
-    transform: rotate(var(--angle)) translateY(calc(-1 * var(--lift))) scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -511,6 +558,20 @@ body::before {
     height: clamp(210px, 38svh, 320px);
   }
 
+  .table.spread-stage {
+    min-height: calc(var(--card-h) + 40px);
+  }
+
+  .spread-row {
+    gap: 18px;
+    padding: 12px 16px 20px;
+    --card-w: clamp(88px, 22vw, 108px);
+  }
+
+  .card.in-spread.deal-in {
+    animation-delay: calc(var(--i) * 18ms);
+  }
+
   .table.reveal-stage {
     min-height: clamp(300px, 52svh, 480px);
   }
@@ -518,10 +579,6 @@ body::before {
   .reveal-grid {
     --card-w: clamp(96px, 26vw, 132px);
     gap: 12px;
-  }
-
-  .card.deal-in {
-    animation-delay: calc(var(--i) * 14ms);
   }
 }
 
