@@ -11,10 +11,6 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/styles.css" />
-    <script>
-      // 若日後有 OpenAI 後端可填入 API 網址；未設定則使用內建解讀引擎
-      window.INTERPRET_API = window.INTERPRET_API || '';
-    </script>
   </head>
   <body>
     <div class="scene">
@@ -33,33 +29,7 @@
         <div class="picked-row" id="pickedRow"></div>
 
         <div class="controls" id="controls"></div>
-
-        <section class="reading-panel hidden" id="readingPanel" aria-live="polite">
-          <h2 class="reading-title">神牌解讀</h2>
-          <p class="reading-question hidden" id="readingQuestion"></p>
-          <div class="reading-cards" id="readingCards"></div>
-          <div class="reading-synthesis hidden" id="readingSynthesis">
-            <h3>綜合</h3>
-            <p id="readingSynthesisText"></p>
-          </div>
-        </section>
       </main>
-
-      <dialog class="info-dialog question-dialog" id="questionDialog">
-        <h2>你想問什麼？</h2>
-        <p class="question-hint">描述你的問題，解讀會更貼近情境（選填，10–150 字）</p>
-        <textarea
-          id="questionInput"
-          class="question-input"
-          maxlength="150"
-          rows="3"
-          placeholder="例如：這份工作適合我嗎？"
-        ></textarea>
-        <div class="dialog-actions">
-          <button type="button" class="pill-btn" id="startDrawBtn">開始抽牌</button>
-          <button type="button" class="pill-btn question-skip" id="skipQuestionBtn">略過</button>
-        </div>
-      </dialog>
 
       <dialog class="info-dialog" id="infoDialog">
         <h2>抽牌流程</h2>
@@ -68,7 +38,7 @@
           <li>第二輪：14 張乙級輔星重疊展開，抽出 2 張</li>
           <li>第三輪：12 張丙級輔星重疊展開，抽出 2 張</li>
           <li>第四輪：四化 + 空牌重疊展開，抽出 1 張</li>
-          <li>最後三行排列後依序翻開，並生成簡易解讀</li>
+          <li>最後三行排列後依序翻開：第一行兩張主星與四化／空牌，第二行乙級，第三行丙級</li>
         </ol>
         <button type="button" class="pill-btn" id="closeInfoBtn">知道了</button>
       </dialog>

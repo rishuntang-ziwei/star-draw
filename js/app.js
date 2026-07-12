@@ -1,5 +1,4 @@
 import { DECK, ROUND_ORDER, TIERS, CARD_BACK } from './cards.js';
-import { fetchReading } from './interpret.js';
 
 const $ = (sel) => document.querySelector(sel);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -11,7 +10,6 @@ const state = {
   deckRemaining: [],
   results: [],
   revealIndex: 0,
-  question: '',
   busy: false,
 };
 
@@ -178,91 +176,13 @@ function ensureDeck(tierId) {
   return true;
 }
 
-function hideReadingPanel() {
-  $('#readingPanel').classList.add('hidden');
-  $('#readingCards').innerHTML = '';
-  $('#readingQuestion').classList.add('hidden');
-  $('#readingSynthesis').classList.add('hidden');
-}
-
-function showReadingLoading() {
-  const panel = $('#readingPanel');
-  panel.classList.remove('hidden');
-  $('#readingQuestion').classList.add('hidden');
-  $('#readingSynthesis').classList.add('hidden');
-  $('#readingCards').innerHTML = '<p class="reading-loading">解讀中…</p>';
-  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-function renderReading(reading) {
-  const panel = $('#readingPanel');
-  const qEl = $('#readingQuestion');
-  const cardsEl = $('#readingCards');
-  const synEl = $('#readingSynthesis');
-  const synText = $('#readingSynthesisText');
-
-  panel.classList.remove('hidden');
-
-  if (state.question) {
-    qEl.textContent = `問題：${state.question}`;
-    qEl.classList.remove('hidden');
-  } else {
-    qEl.classList.add('hidden');
-  }
-
-  cardsEl.innerHTML = '';
-  reading.cards.forEach((item) => {
-    const article = document.createElement('article');
-    article.className = 'reading-item';
-    const title = document.createElement('h3');
-    title.textContent = item.role ? `${item.name} · ${item.role}` : item.name;
-    const body = document.createElement('p');
-    body.textContent = item.brief;
-    article.append(title, body);
-    cardsEl.appendChild(article);
-  });
-
-  synText.textContent = reading.synthesis;
-  synEl.classList.remove('hidden');
-
-  if (reading.source === 'ai') {
-    panel.dataset.source = 'ai';
-  } else {
-    panel.dataset.source = 'builtin';
-  }
-
-  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-async function generateReading() {
-  showReadingLoading();
-  const reading = await fetchReading(state.results, state.question);
-  renderReading(reading);
-}
-
-function openQuestionDialog() {
-  if (state.busy) return;
-  const dialog = $('#questionDialog');
-  $('#questionInput').value = state.question;
-  dialog.showModal();
-  $('#questionInput').focus();
-}
-
-function beginFromQuestion() {
-  state.question = $('#questionInput').value.trim().slice(0, 150);
-  $('#questionDialog').close();
-  startGame();
-}
-
 function renderIdle() {
   state.phase = 'idle';
   state.busy = false;
-  state.question = '';
   $('#brand').classList.remove('hidden');
   setHint('點擊卡牌開始');
   $('#pickedRow').innerHTML = '';
   clearControls();
-  hideReadingPanel();
 
   const table = $('#table');
   table.innerHTML = '';
@@ -271,7 +191,7 @@ function renderIdle() {
   const hero = makeCardEl({ id: 'hero', name: '開始' }, { hero: true });
   hero.addEventListener('click', () => {
     if (state.busy) return;
-    openQuestionDialog();
+    startGame();
   });
   table.appendChild(hero);
 }
@@ -429,7 +349,8 @@ function revealLayoutRows(results) {
     [
       { card: results[0], resultIndex: 0 },
       { card: results[1], resultIndex: 1 },
-      { card: results[6], resultIndex: 6, column: 4 },
+      { gap: true },
+      { card: results[6], resultIndex: 6 },
     ],
     [
       { card: results[2], resultIndex: 2 },
@@ -467,12 +388,21 @@ function renderRevealGrid() {
 
   let visualIndex = 0;
   revealLayoutRows(state.results).forEach((rowItems) => {
+    const line = document.createElement('div');
+    line.className = 'reveal-row-line';
+
     rowItems.forEach((item) => {
-      const el = revealCardEl(item.card, item.resultIndex, visualIndex);
-      if (item.column) el.style.gridColumn = String(item.column);
-      grid.appendChild(el);
+      if (item.gap) {
+        const gap = document.createElement('span');
+        gap.className = 'reveal-gap';
+        line.appendChild(gap);
+        return;
+      }
+      line.appendChild(revealCardEl(item.card, item.resultIndex, visualIndex));
       visualIndex += 1;
     });
+
+    grid.appendChild(line);
   });
 
   table.appendChild(grid);
@@ -519,11 +449,9 @@ async function flipNext() {
     $('#revealGrid')
       ?.querySelectorAll('.reveal-card')
       .forEach((c) => c.classList.remove('waiting', 'active-flip', 'flipping'));
-    setHint('抽牌完成 · 解讀生成中');
+    setHint('抽牌完成 · 七張牌已全部翻開');
     clearControls();
     addControl('重新抽牌', () => renderIdle());
-    await generateReading();
-    setHint('抽牌完成 · 七張牌已全部翻開');
   } else {
     const next = revealCardByIndex(state.revealIndex);
     next?.classList.remove('waiting');
@@ -538,12 +466,6 @@ async function flipNext() {
 function init() {
   $('#infoBtn').addEventListener('click', () => $('#infoDialog').showModal());
   $('#closeInfoBtn').addEventListener('click', () => $('#infoDialog').close());
-  $('#startDrawBtn').addEventListener('click', beginFromQuestion);
-  $('#skipQuestionBtn').addEventListener('click', () => {
-    state.question = '';
-    $('#questionDialog').close();
-    startGame();
-  });
   renderIdle();
 }
 
